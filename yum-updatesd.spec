@@ -1,28 +1,32 @@
-Summary:	Update notification daemon
+Summary:	RPM update notifier daemon
+Summary(pl.UTF-8):	Demon powiadamiający o uaktualnionych RPM-ach
 Name:		yum-updatesd
-Version:	0.9
+Version:	0.5
 Release:	0.1
 Epoch:		1
 License:	GPL v2
-Group:		Base
-Source0:	%{name}-%{version}.tar.bz2
+Group:		Networking/Daemons
+Source0:	http://yum.baseurl.org/download/yum-updatesd/%{name}-%{version}.tar.bz2
+# Source0-md5:	369b99f963dc9a4eb8fbb3c52bd0b8cd
 URL:		http://linux.duke.edu/yum/
-BuildRequires:	python
-Requires(post):	/sbin/chkconfig
-Requires(post):	/sbin/service
-Requires(preun):	/sbin/chkconfig
-Requires(preun):	/sbin/service
-Requires:	dbus-python
-Requires:	gamin-python
-Requires:	pygobject2
-Requires:	python >= 2.4
+Source1:	%{name}.init
+Source2:	%{name}.sysconfig
+Requires(post,preun):	/sbin/chkconfig
+Requires:	dbus
+Requires:	python-dbus
+Requires:	rc-scripts
 Requires:	yum >= 3.2.0
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-yum-updatesd provides a daemon which checks for available updates and
-can notify you when they are available via email, syslog or dbus.
+This is a daemon which periodically checks for updates and can send
+notifications via mail, dbus or syslog.
+
+%description -l pl.UTF-8
+Ten pakiet zawiera demona regularnie sprawdzającego dostępność
+uaktualnień, mogącego wysyłać uaktualnienia pocztą elektroniczną,
+poprzez dbus lub sysloga.
 
 %prep
 %setup -q
@@ -32,27 +36,33 @@ can notify you when they are available via email, syslog or dbus.
 
 %install
 rm -rf $RPM_BUILD_ROOT
+install -d $RPM_BUILD_ROOT/etc/sysconfig/yum-updatesd
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
+
+install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/yum-updatesd
+install -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/yum-updatesd
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
 /sbin/chkconfig --add yum-updatesd
-service yum-updatesd restart
+%service yum-updatesd restart
 
 %preun
-if [ "$1" = 0 ]; then
+if [ "$1" = "0" ]; then
 	/sbin/chkconfig --del yum-updatesd
-	%service yum-updatesd stop
+	%service -q yum-updatesd stop
 fi
 
 %files
 %defattr(644,root,root,755)
-%attr(754,root,root) /etc/rc.d/init.d/yum-updatesd
-%config(noreplace) %{_sysconfdir}/yum/yum-updatesd.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/yum/yum-updatesd.conf
 /etc/dbus-1/system.d/yum-updatesd.conf
 %attr(755,root,root) %{_sbindir}/yum-updatesd
-%{_libexecdir}/yum-updatesd-helper
-%{_mandir}/man*/yum-updatesd*
+%config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/yum-updatesd
+%attr(754,root,root) /etc/rc.d/init.d/yum-updatesd
+#%{_libexecdir}/yum-updatesd-helper
+%{_mandir}/man5/yum-updatesd.conf.5*
+%{_mandir}/man8/yum-updatesd.8*
