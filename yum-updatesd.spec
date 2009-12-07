@@ -11,6 +11,7 @@ Source0:	http://yum.baseurl.org/download/yum-updatesd/%{name}-%{version}.tar.bz2
 URL:		http://linux.duke.edu/yum/
 Source1:	%{name}.init
 Source2:	%{name}.sysconfig
+BuildRequires:	rpm-pythonprov
 Requires(post,preun):	/sbin/chkconfig
 Requires:	dbus
 Requires:	python-dbus
