@@ -16,8 +16,10 @@ BuildRequires:	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	dbus
 Requires:	python-dbus
+Requires:	python-gamin
+Requires:	python-pygobject >= 2.0
 Requires:	rc-scripts
-Requires:	yum >= 3.2.0
+Requires:	yum >= 3.2.25-3
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
