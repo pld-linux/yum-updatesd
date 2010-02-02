@@ -1,17 +1,18 @@
 Summary:	RPM update notifier daemon
 Summary(pl.UTF-8):	Demon powiadamiający o uaktualnionych RPM-ach
 Name:		yum-updatesd
-Version:	0.5
-Release:	0.1
+Version:	0.9
+Release:	1
 Epoch:		1
 License:	GPL v2
 Group:		Networking/Daemons
-Source0:	http://yum.baseurl.org/download/yum-updatesd/%{name}-%{version}.tar.bz2
-# Source0-md5:	369b99f963dc9a4eb8fbb3c52bd0b8cd
+Source0:	%{name}-%{version}.tar.bz2
+# Source0-md5:	b03a3b3bf78a11fec240c82bf2f53b2b
 URL:		http://linux.duke.edu/yum/
 Source1:	%{name}.init
 Source2:	%{name}.sysconfig
 BuildRequires:	rpm-pythonprov
+BuildRequires:	sed >= 4.0
 Requires(post,preun):	/sbin/chkconfig
 Requires:	dbus
 Requires:	python-dbus
@@ -19,6 +20,8 @@ Requires:	rc-scripts
 Requires:	yum >= 3.2.0
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		_libexecdir	%{_prefix}/lib
 
 %description
 This is a daemon which periodically checks for updates and can send
@@ -31,18 +34,20 @@ poprzez dbus lub sysloga.
 
 %prep
 %setup -q
+%{__sed} -i -e 's,/usr/libexec/,%{_libexecdir}/,' yum-updatesd
+%{__sed} -i -e 's,\$(PREFIX)/libexec,%{_libexecdir},' Makefile
 
 %build
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/etc/sysconfig/yum-updatesd
+install -d $RPM_BUILD_ROOT/etc/sysconfig
 %{__make} install \
 	DESTDIR=$RPM_BUILD_ROOT
 
 install -p %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/yum-updatesd
-install -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/yum-updatesd
+cp -a %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/yum-updatesd
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -64,6 +69,6 @@ fi
 %attr(755,root,root) %{_sbindir}/yum-updatesd
 %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/yum-updatesd
 %attr(754,root,root) /etc/rc.d/init.d/yum-updatesd
-#%{_libexecdir}/yum-updatesd-helper
+%attr(755,root,root) %{_libexecdir}/yum-updatesd-helper
 %{_mandir}/man5/yum-updatesd.conf.5*
 %{_mandir}/man8/yum-updatesd.8*
